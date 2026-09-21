@@ -3,7 +3,7 @@ import java.util.Map;
 
 public class CarStatistics {
 
-    private Map<CarStatus, Integer> statusCounts;
+    private Map<CarStatus, Long> statusCounts;
     private long totalMileage;
     private int carCount;
 
@@ -11,7 +11,7 @@ public class CarStatistics {
         statusCounts = new EnumMap<>(CarStatus.class);
 
         for (CarStatus status : CarStatus.values()) {
-            statusCounts.put(status, 0);
+            statusCounts.put(status, 0L);
         }
 
         totalMileage = 0;
@@ -41,11 +41,11 @@ public class CarStatistics {
         return (double) totalMileage / carCount;
     }
 
-    public int getStatusCount(CarStatus status) {
+    public long getStatusCount(CarStatus status) {
         return statusCounts.get(status);
     }
 
-    public void setStatusCount(CarStatus status, int count) {
+    public void setStatusCount(CarStatus status, long count) {
         statusCounts.put(status, count);
     }
 
@@ -63,5 +63,9 @@ public class CarStatistics {
 
     public int getCarCount() {
         return carCount;
+    }
+
+    public Map<CarStatus, Long> getStatusCounts() {
+        return statusCounts;
     }
 }

@@ -1,44 +1,22 @@
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 import java.util.stream.Collector;
 
 public class Statistics {
 
+    private static volatile Map<CarStatus, Long> statusCounts;
+    private static volatile double averageMileage;
+
     public static void calculateWithLoop(List<Car> cars) {
 
-        Map<CarStatus, Integer> statusCounts =
-                new EnumMap<>(CarStatus.class);
-
-        for (CarStatus status : CarStatus.values()) {
-            statusCounts.put(status, 0);
-        }
-
-        long totalMileage = 0;
-
+        CarStatistics statistics = new CarStatistics();
         for (Car car : cars) {
-            CarStatus status = car.getStatus();
-
-            statusCounts.put(
-                    status,
-                    statusCounts.get(status) + 1
-            );
-
-            totalMileage += car.getMileage();
+            statistics.add(car);
         }
-
-        double averageMileage =
-                (double) totalMileage / cars.size();
-
-        System.out.println("Статистика через цикл:");
-        System.out.println("AVAILABLE: "
-                + statusCounts.get(CarStatus.AVAILABLE));
-        System.out.println("RENTED: "
-                + statusCounts.get(CarStatus.RENTED));
-        System.out.println("MAINTENANCE: "
-                + statusCounts.get(CarStatus.MAINTENANCE));
-        System.out.println("Средний пробег: "
-                + averageMileage);
+        statusCounts = statistics.getStatusCounts();
+        averageMileage = statistics.getAverageMileage();
     }
 
     public static void calculateWithStream(List<Car> cars) {
@@ -52,14 +30,6 @@ public class Statistics {
                                 )
                         );
 
-        System.out.println("Статистика через Stream API:");
-        System.out.println("AVAILABLE: "
-                + statusCounts.getOrDefault(CarStatus.AVAILABLE, 0L));
-        System.out.println("RENTED: "
-                + statusCounts.getOrDefault(CarStatus.RENTED, 0L));
-        System.out.println("MAINTENANCE: "
-                + statusCounts.getOrDefault(CarStatus.MAINTENANCE, 0L));
-
                 
         double averageMileage =
         cars.stream()
@@ -67,7 +37,8 @@ public class Statistics {
                 .average()
                 .orElse(0);
 
-        System.out.println("Средний пробег: " + averageMileage);
+        Statistics.statusCounts = statusCounts;
+        Statistics.averageMileage = averageMileage;
     }
 
 
@@ -79,68 +50,77 @@ public class Statistics {
                         CarStatistics::add,
                         (first, second) -> {
 
-                                for (CarStatus status : CarStatus.values()) {
+                            for (CarStatus status : CarStatus.values()) {
 
-                                int count =
+                                long count =
                                         first.getStatusCount(status)
-                                        + second.getStatusCount(status);
+                                                + second.getStatusCount(status);
 
                                 first.setStatusCount(status, count);
-                                }
+                            }
 
-                                first.addMileage(
-                                        second.getTotalMileage()
-                                );
+                            first.addMileage(
+                                    second.getTotalMileage()
+                            );
 
-                                first.addCarCount(
-                                        second.getCarCount()
-                                );
+                            first.addCarCount(
+                                    second.getCarCount()
+                            );
 
-                                return first;
+                            return first;
                         }
                 ));
 
-        System.out.println("Статистика через собственный Collector:");
-
-        System.out.println("AVAILABLE: "
-                + statistics.getStatusCount(CarStatus.AVAILABLE));
-
-        System.out.println("RENTED: "
-                + statistics.getStatusCount(CarStatus.RENTED));
-
-        System.out.println("MAINTENANCE: "
-                + statistics.getStatusCount(CarStatus.MAINTENANCE));
-
-        System.out.println("Средний пробег: "
-                + statistics.getAverageMileage());
-        }
+        statusCounts = statistics.getStatusCounts();
+        averageMileage = statistics.getAverageMileage();
+    }
    
     public static void measureTime(int size) {
 
         List<Car> cars = CarGenerator.generate(size);
 
-        long start;
-        long end;
+        for (int i = 0; i < 20; i++) {
+            calculateWithLoop(cars);
+            calculateWithStream(cars);
+            calculateWithOwnCollector(cars);
+        }
 
-        start = System.nanoTime();
-        calculateWithLoop(cars);
-        end = System.nanoTime();
+        int repeats = 20;
+        long totalLoop = 0;
+        long totalStream = 0;
+        long totalCollector = 0;
+
+        for (int i = 0; i < repeats; i++) {
+            switch (i % 3) {
+                case 0:
+                    totalLoop      += time(cars, Statistics::calculateWithLoop);
+                    totalStream    += time(cars, Statistics::calculateWithStream);
+                    totalCollector += time(cars, Statistics::calculateWithOwnCollector);
+                    break;
+                case 1:
+                    totalStream    += time(cars, Statistics::calculateWithStream);
+                    totalCollector += time(cars, Statistics::calculateWithOwnCollector);
+                    totalLoop      += time(cars, Statistics::calculateWithLoop);
+                    break;
+                case 2:
+                    totalCollector += time(cars, Statistics::calculateWithOwnCollector);
+                    totalLoop      += time(cars, Statistics::calculateWithLoop);
+                    totalStream    += time(cars, Statistics::calculateWithStream);
+                    break;
+            }
+        }
 
         System.out.println("Время цикла: "
-                + (end - start) / 1_000_000.0 + " мс");
-
-        start = System.nanoTime();
-        calculateWithStream(cars);
-        end = System.nanoTime();
-
+                + totalLoop      / 1_000_000.0 / repeats + " мс");
         System.out.println("Время Stream API: "
-                + (end - start) / 1_000_000.0 + " мс");
-
-        start = System.nanoTime();
-        calculateWithOwnCollector(cars);
-        end = System.nanoTime();
-
+                + totalStream    / 1_000_000.0 / repeats + " мс");
         System.out.println("Время собственного Collector: "
-                + (end - start) / 1_000_000.0 + " мс");
-        }
+                + totalCollector / 1_000_000.0 / repeats + " мс");
+    }
+
+    private static long time(List<Car> cars, Consumer<List<Car>> method) {
+        long start = System.nanoTime();
+        method.accept(cars);
+        return System.nanoTime() - start;
+    }
 }
