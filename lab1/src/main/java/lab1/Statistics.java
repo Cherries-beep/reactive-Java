@@ -1,4 +1,9 @@
-import java.util.EnumMap;
+package lab1;
+
+import domain.Car;
+import domain.CarGenerator;
+import domain.CarStatus;
+
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;

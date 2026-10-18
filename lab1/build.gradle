@@ -1,0 +1,11 @@
+plugins {
+    id 'application'
+}
+
+dependencies {
+    implementation project(':domain')
+}
+
+application {
+    mainClass = 'lab1.Main'
+}

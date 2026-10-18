@@ -1,3 +1,5 @@
+package domain;
+
 public record CarInfo(
         int year,
         int horsepower,

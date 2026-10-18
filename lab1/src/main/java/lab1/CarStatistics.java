@@ -1,3 +1,8 @@
+package lab1;
+
+import domain.Car;
+import domain.CarStatus;
+
 import java.util.EnumMap;
 import java.util.Map;
 
