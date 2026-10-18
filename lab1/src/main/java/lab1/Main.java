@@ -1,9 +1,5 @@
 package lab1;
 
-import domain.Car;
-import domain.CarGenerator;
-
-import java.util.List;
 public class Main {
 
     public static void main(String[] args) {

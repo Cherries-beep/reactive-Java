@@ -2,9 +2,11 @@ package domain;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 public class Car {
 
+    private final UUID id = UUID.randomUUID();
     private int mileage;
     private String model;
     private LocalDateTime lastMaintenance;
@@ -29,6 +31,10 @@ public class Car {
         this.info = info;
         this.rentals = rentals;
         this.location = location;
+    }
+
+    public UUID getId() {
+        return id;
     }
 
     public int getMileage() {

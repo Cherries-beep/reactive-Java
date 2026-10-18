@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.UUID;
 
 public class CarGenerator {
 
@@ -58,7 +59,7 @@ public class CarGenerator {
                     DISTRICTS[RANDOM.nextInt(DISTRICTS.length)]
             );
 
-            List<Rental> rentals = generateRentals();
+            List<Rental> rentals = new ArrayList<>();
 
             Car car = new Car(
                     mileage,
@@ -70,24 +71,25 @@ public class CarGenerator {
                     location
             );
 
+            rentals.addAll(generateRentals(car.getId(), mileage));
             cars.add(car);
         }
 
         return cars;
     }
 
-    private static List<Rental> generateRentals() {
+    private static List<Rental> generateRentals(UUID carId, int mileage) {
 
         List<Rental> rentals = new ArrayList<>();
 
         int count = RANDOM.nextInt(6);
 
+        int remainingMileage = mileage;
+        LocalDateTime now = LocalDateTime.now();
         for (int i = 0; i < count; i++) {
 
             LocalDateTime start =
-                    LocalDateTime.now().minusDays(
-                            RANDOM.nextInt(30)
-                    );
+                    now.minusDays(count - i).minusMinutes(RANDOM.nextInt(60));
 
             LocalDateTime end =
                     start.plusMinutes(
@@ -97,8 +99,11 @@ public class CarGenerator {
             double price =
                     300 + RANDOM.nextInt(1701);
 
+            int distanceKm = RANDOM.nextInt(Math.min(remainingMileage, 100) + 1);
+            remainingMileage -= distanceKm;
+
             rentals.add(
-                    new Rental(start, end, price)
+                    new Rental(UserGenerator.generate(), carId, start, end, price, distanceKm)
             );
         }
 
