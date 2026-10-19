@@ -10,9 +10,9 @@ public class Rental {
     private final User user;
     private final UUID carId;
     private final int distanceKm;
-    private LocalDateTime startTime;
-    private LocalDateTime endTime;
-    private double price;
+    private final LocalDateTime startTime;
+    private final LocalDateTime endTime;
+    private final double price;
 
     public Rental(
             User user,
@@ -39,6 +39,17 @@ public class Rental {
     }
 
     public UUID getCarId() {
+        return carId;
+    }
+
+    public UUID getCarId(long delayMillis) {
+        if (delayMillis > 0) {
+            try {
+                Thread.sleep(delayMillis);
+            } catch (InterruptedException e) {
+                throw new IllegalStateException("Rental retrieval interrupted", e);
+            }
+        }
         return carId;
     }
 
